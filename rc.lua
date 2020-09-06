@@ -33,10 +33,111 @@ naughty.connect_signal("request::display_error", function(message, startup)
 end)
 -- }}}
 
--- {{{ Variable definitions
+-- {{{ Theme selection
 -- Themes define colours, icons, font and wallpapers.
-beautiful.init(gears.filesystem.get_themes_dir() .. "default/theme.lua")
+local function mytheme(config)
+    local protected_call = require("gears.protected_call")
+    local theme = protected_call(dofile, config)
+    -- Nord: an arctic, north-bluish color palette
+    -- Polar Night
+    local nord0 = "#2E3440"
+    local nord1 = "#3B4252"
+    local nord2 = "#434C5E"
+    local nord3 = "#4C566A"
+    -- Snow Storm
+    local nord4 = "#D8DEE9"
+    local nord5 = "#E5E9F0"
+    local nord6 = "#ECEFF4"
+    -- Frost
+    local nord7 = "#8FBCBB"
+    local nord8 = "#88C0D0"
+    local nord9 = "#81A1C1"
+    local nord10 = "#5E81AC"
+    -- Aurora
+    local nord11 = "#BF616A"
+    local nord12 = "#D08770"
+    local nord13 = "#EBCB8B"
+    local nord14 = "#A3BE8C"
+    local nord15 = "#B48EAD"
+    -- theme.tasklist_fg_focus = nord1
+    -- theme.tasklist_bg_focus = nord9
+    -- theme.tasklist_fg_normal = nord4
+    -- theme.tasklist_bg_normal = nord1
+    -- theme.titlebar_fg_focus = nord1
+    -- theme.titlebar_bg_focus = nord10
+    -- theme.titlebar_fg_normal = nord4
+    -- theme.titlebar_bg_normal = nord1
+    -- theme.border_normal = nord15
+    -- theme.border_focus  = nord14
+    -- theme.border_marked = nord13
+    -- theme.wibar_border_color = nord15
+    -- -- theme.wibar_fg = nord4
+    -- -- theme.wibar_bg = nord0
 
+    -- icon theme
+    theme.icon_theme="Papirus-Dark"
+    -- theme.icon_theme="Nordic-Darker"
+
+    -- sizes
+    theme.menu_height = 32
+    theme.menu_width = 256
+    theme.wibar_height = 30
+    theme.wibar_border_width = 1
+
+    theme.wibar_opacity = 0.5
+
+    -- fonts
+    theme.font = "Sans 12"
+    theme.tasklist_font = "Sans 11"
+    theme.tasklist_font_focus = "Sans bold italic 11"
+    theme.taglist_font = "Sans 14"
+    theme.menu_font = "Sans 14"
+    theme.notification_font = "Sans 13"
+    -- theme.hotkeys_font = "Sans 14"
+    -- theme.hotkeys_description_font = "Sans bold italic 13"
+    -- theme.titlebar_font_focus = "Sans bold italic 13" -- this variable does not exist
+
+    local mywallpaper = os.getenv("HOME") .. "/.local/share/backgrounds/awesome_1920x1080.png"
+    if gears.filesystem.file_readable(mywallpaper) then
+        theme.wallpaper = mywallpaper
+    end
+
+    return theme
+end
+
+-- https://thibaultmarin.github.io/blog/posts/2016-10-05-Awesome-wm_configuration.html
+function get_current_theme()
+    local theme_name = "default"
+    local theme_fname = gears.filesystem.get_configuration_dir() .. "theme"
+    if gears.filesystem.file_readable(theme_fname) then
+        for line in io.lines(theme_fname) do
+            if string.find(line, "^%s*[^#]") ~= nil then
+                theme_name = line:gsub("^%s*(.-)%s*$", "%1")
+            end
+        end
+    end
+    local theme_file = get_first_found_file(
+        { gears.filesystem.get_configuration_dir() .. "themes/",
+          gears.filesystem.get_themes_dir(),
+        },
+        theme_name .. "/theme.lua"
+    )
+    return theme_file
+end
+
+function get_first_found_file(path_list, fname)
+    for _, f in ipairs(path_list) do
+        fname_full = f .. fname
+        if gears.filesystem.file_readable(fname_full) then
+            return fname_full
+        end
+    end
+end
+
+beautiful.init(mytheme(get_current_theme()))
+-- }}}
+
+-- {{{ Variable definitions
 -- This is used later as the default terminal and editor to run.
 terminal = "terminology"
 editor = os.getenv("EDITOR") or "emacs"
