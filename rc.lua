@@ -21,6 +21,17 @@ local hotkeys_popup = require("awful.hotkeys_popup")
 -- when client with a matching name is opened:
 require("awful.hotkeys_popup.keys")
 
+-- Alt-Tab for the awesome window manager (and more)
+-- https://github.com/blueyed/awesome-cyclefocus
+local cyclefocus = require('cyclefocus')
+-- cyclefocus.debug_level = 2
+-- cyclefocus.debug_use_naughty_notify = true
+cyclefocus.move_mouse_pointer = false
+cyclefocus.display_next_count = 3
+cyclefocus.display_prev_count = 3
+cyclefocus.default_preset.base_font_size = 14
+cyclefocus.default_preset.scale_factor_for_entry_offset = { ["0"] = 1.5, ["1"] = 1.4,  ["2"] = 1.3,  ["3"] = 1.2,  ["4"] = 1.1, }
+
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
 -- another config (This code will only ever execute for the fallback config)
@@ -377,6 +388,29 @@ awful.keyboard.append_global_keybindings({
                   end
               end,
               {description = "restore minimized", group = "client"}),
+
+    -- Added by JRM
+
+    -- awesome-cyclefocus: cycle through all clients on the same screen
+    cyclefocus.key({ altkey, }, "Tab", {
+            cycle_filters = { function (c, source_c)
+                              if c == nil or source_c == nil then
+                                  return false
+                              end
+                              for _, t in pairs(c:tags()) do
+                                  for _, t2 in pairs(source_c:tags()) do
+                                      if t.name == t2.name then
+                                          return true
+                                      end
+                                  end
+                              end
+                              return false
+                          end,
+                          -- cyclefocus.filters.same_screen,
+                        },
+            keys = {'Tab', 'ISO_Left_Tab'},  -- default, could be left out
+            display_notifications = true,
+    }),
 })
 
 -- Layout related keybindings
