@@ -714,3 +714,29 @@ naughty.connect_signal("request::display", function(n)
 end)
 
 -- }}}
+
+-- {{{ Run script on startup
+-- https://askubuntu.com/questions/1133769/run-script-on-awesome-wm-startup
+--
+-- On the exit signal, that performs only on awesome restart we're
+-- creating a flag file, that tells to the startup signal that this
+-- startup is going immediately after the awesome restart. On the startup
+-- signal fired we're removing this flag and if it doesn't remove
+-- successfully (doesn't exist) - we're running our startup-only script.
+
+awesome.connect_signal(
+    'exit',
+    function(args)
+        awful.util.spawn('touch /tmp/awesomw-restart')
+    end
+)
+
+awesome.connect_signal(
+    'startup',
+    function(args)
+        awful.util.spawn('bash -c "rm /tmp/awesomw-restart || $HOME/.config/awesome/start.sh')
+    end
+)
+
+awful.spawn.with_shell("$HOME/.config/awesome/start.sh")
+-- }}}
