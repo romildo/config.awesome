@@ -21,6 +21,15 @@ local hotkeys_popup = require("awful.hotkeys_popup")
 -- when client with a matching name is opened:
 require("awful.hotkeys_popup.keys")
 
+-- provides setenv
+local posix = require("posix")
+posix.stdlib.setenv("QT_QPA_PLATFORMTHEME", "qt5ct") -- qt5ct gnome gtk2 gtk3
+posix.stdlib.setenv("QT_STYLE_OVERRIDE", "Breeze") -- Breeze Windows Fusion
+--posix.stdlib.setenv("QT_AUTO_SCREEN_SCALE_FACTOR", "0")
+posix.stdlib.setenv("QT_FONT_DPI", "128")
+--posix.stdlib.setenv("GDK_DPI_SCALE", "1.28")
+--posix.stdlib.setenv("EDITOR", "vim")
+
 -- Alt-Tab for the awesome window manager (and more)
 -- https://github.com/blueyed/awesome-cyclefocus
 local cyclefocus = require('cyclefocus')
