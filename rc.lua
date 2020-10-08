@@ -41,6 +41,15 @@ cyclefocus.display_prev_count = 3
 cyclefocus.default_preset.base_font_size = 14
 cyclefocus.default_preset.scale_factor_for_entry_offset = { ["0"] = 1.5, ["1"] = 1.4,  ["2"] = 1.3,  ["3"] = 1.2,  ["4"] = 1.1, }
 
+-- https://github.com/streetturtle/awesome-wm-widgets
+local cpu_widget = require("awesome-wm-widgets.cpu-widget.cpu-widget")
+local ram_widget = require("awesome-wm-widgets.ram-widget.ram-widget")
+-- local brightness_widget = require("awesome-wm-widgets.brightness-widget.brightness")
+local battery_widget = require("awesome-wm-widgets.battery-widget.battery")
+local logout_popup = require("awesome-wm-widgets.logout-popup-widget.logout-popup")
+local volume_widget = require('awesome-wm-widgets.volume-widget.volume')
+local fs_widget = require("awesome-wm-widgets.fs-widget.fs-widget")
+
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
 -- another config (This code will only ever execute for the fallback config)
@@ -307,11 +316,33 @@ screen.connect_signal("request::desktop_decoration", function(s)
             layout = wibox.layout.fixed.horizontal,
             mykeyboardlayout,
             wibox.widget.systray(),
+            cpu_widget(),
+            ram_widget(),
+            battery_widget({
+                    path_to_icons = path_to_icons,
+                    show_current_level = true,
+                    display_notification = true,
+                    timeout = 5,
+            }),
+            -- brightness_widget({
+            --         get_brightness_cmd = 'brightnessctl get',
+            --         inc_brightness_cmd = 'brightnessctl set +5%',
+            --         dec_brightness_cmd = 'brightnessctl set -5%',
+            --         path_to_icon = menubar.utils.lookup_icon("display-brightness-symbolic.svg"),
+            -- }),
+            volume_widget({ icon_dir = path_to_icons }),
+            -- fs_widget({ mounts = { '/', '/alt' } }),
             mytextclock,
             s.mylayoutbox,
+            -- logout_popup.widget{},
         },
     }
 end)
+-- }}}
+
+-- {{{ Snap client to screen edges
+-- Awesome 4 adds edge snapping, the following disables it.
+awful.mouse.snap.edge_enabled = false
 -- }}}
 
 -- {{{ Mouse bindings
