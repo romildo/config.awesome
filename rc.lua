@@ -230,7 +230,16 @@ end)
 mykeyboardlayout = awful.widget.keyboardlayout()
 
 -- Create a textclock widget
-mytextclock = wibox.widget.textclock()
+mytextclock = wibox.widget.textclock(" %a %b %d, %T")
+mytextclock:connect_signal("button::press",
+                           function (a, b, c, btnumber)
+                              --naughty.notify({text=item .. " " .. button .. " " .. mods, title="Titre"})
+                              if btnumber == 1 then
+                                 awful.spawn("gsimplecal next_month")
+                              elseif btnumber == 3 then
+                                 awful.spawn("gsimplecal prev_month")
+                              end
+                           end)
 
 screen.connect_signal("request::wallpaper", function(s)
     -- Wallpaper
