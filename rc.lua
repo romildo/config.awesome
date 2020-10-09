@@ -564,6 +564,21 @@ awful.keyboard.append_global_keybindings({
     awful.key({ }, "XF86AudioPrev",
         function () awful.spawn("playerctl previous") end,
         {description = "skip to previous track", group = "custom"}),
+
+    -- Applications
+    awful.key({ modkey, altkey }, "t", function () awful.spawn("gnome-terminal") end, {description = "launch gnome-terminal", group = "launcher"}),
+    awful.key({ modkey, altkey }, "w", function () awful.spawn("firefox") end, {description = "launch firefox", group = "launcher"}),
+    --awful.key({ modkey, altkey }, "w", function () awful.spawn("vivaldi") end, {description = "launch vivaldi", group = "launcher"}),
+    awful.key({ modkey, altkey }, "e", function () awful.spawn("emacsclient -a emacs -c") end, {description = "launch emacsclient", group = "launcher"}),
+    --awful.key({ modkey, altkey }, "f", function () awful.spawn("dolphin") end, {description = "launch dolphin", group = "launcher"}),
+    awful.key({ modkey, altkey }, "f", function () awful.spawn("pcmanfm-qt") end, {description = "launch pcmanfm-qt", group = "launcher"}),
+    awful.key({ modkey, altkey }, "q", function () awful.spawn("gnome-terminal --window-with-profile=malaquias") end, {description = "launch gnome-terminal at malaquias", group = "launcher"}),
+    awful.key({ modkey, altkey }, "m", function () awful.spawn("gnome-terminal --window-with-profile=mutt") end, {description = "launch mutt on gnome-terminal", group = "launcher"}),
+    awful.key({ modkey, altkey }, "s", function () awful.spawn("gksu --user mike --login gnome-terminal") end, {description = "launch gnome-terminal for mike", group = "launcher"}),
+    awful.key({ modkey, altkey }, "r", function () awful.spawn("gksu --login gnome-terminal") end, {description = "launch gnome-terminal for root", group = "launcher"}),
+    awful.key({ modkey, altkey }, "g", function () awful.spawn("gksu --login pcmanfm-qt") end, {description = "launch pcmanfm-qt for root", group = "launcher"}),
+    awful.key({ modkey, altkey }, "v", function () awful.spawn("vim -g") end, {description = "launch gvim", group = "launcher"}),
+    awful.key({ modkey, altkey }, "i", function () awful.spawn("xcalib -invert -alter") end, {description = "launch xcalib", group = "launcher"})
 })
 
 -- Layout related keybindings
