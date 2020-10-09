@@ -539,6 +539,31 @@ awful.keyboard.append_global_keybindings({
             keys = {'Tab', 'ISO_Left_Tab'},  -- default, could be left out
             display_notifications = true,
     }),
+
+    -- Volume control
+    awful.key({ }, "XF86AudioRaiseVolume",
+        function () awful.spawn("pactl set-sink-volume @DEFAULT_SINK@ +2000") end,
+        {description = "raise master volume", group = "custom"}),
+
+    awful.key({ }, "XF86AudioLowerVolume",
+        function () awful.spawn("pactl set-sink-volume @DEFAULT_SINK@ -2000") end,
+        {description = "lower master volume", group = "custom"}),
+
+    awful.key({ }, "XF86AudioMute",
+        function () awful.spawn("pactl set-sink-mute @DEFAULT_SINK@ toggle") end,
+        {description = "toggle mute sound", group = "custom"}),
+
+    awful.key({ }, "XF86AudioPlay",
+        function () awful.spawn("playerctl play-pause") end,
+        {description = "toggle play/pause media", group = "custom"}),
+
+    awful.key({ }, "XF86AudioNext",
+        function () awful.spawn("playerctl next") end,
+        {description = "skip to next track", group = "custom"}),
+
+    awful.key({ }, "XF86AudioPrev",
+        function () awful.spawn("playerctl previous") end,
+        {description = "skip to previous track", group = "custom"}),
 })
 
 -- Layout related keybindings
