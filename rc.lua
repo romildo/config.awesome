@@ -30,6 +30,10 @@ posix.stdlib.setenv("QT_FONT_DPI", "128")
 --posix.stdlib.setenv("GDK_DPI_SCALE", "1.28")
 --posix.stdlib.setenv("EDITOR", "vim")
 
+-- Freedesktop.org menu and desktop icons support
+-- https://github.com/lcpz/awesome-freedesktop
+local freedesktop = require("freedesktop")
+
 -- Alt-Tab for the awesome window manager (and more)
 -- https://github.com/blueyed/awesome-cyclefocus
 local cyclefocus = require('cyclefocus')
@@ -181,6 +185,29 @@ modkey = "Mod4"
 altkey = "Mod1"
 -- }}}
 
+-- {{{ Helper functions
+local function confirm_action(name, func)
+    return function()
+        mouse.screen.mywibox:set_bg(beautiful.bg_urgent)
+        mouse.screen.mywibox:set_fg(beautiful.fg_urgent)
+        awful.prompt.run {
+            prompt = " <b>" .. name .. "</b>?" .. " [y/N]  ",
+            textbox = mouse.screen.mypromptbox.widget,
+            exe_callback = function (input)
+                if string.lower(input) == 'y' then
+                    func()
+                end
+            end,
+            history_path = nil,
+            done_callback = function ()
+                mouse.screen.mywibox:set_bg(beautiful.screen_highlight_bg_active)
+                mouse.screen.mywibox:set_fg(beautiful.screen_highlight_fg_active)
+            end
+        }
+    end
+end
+-- }}}
+
 -- {{{ Menu
 -- Create a launcher widget and a main menu
 myawesomemenu = {
@@ -191,10 +218,26 @@ myawesomemenu = {
    { "Quit", function() awesome.quit() end },
 }
 
-mymainmenu = awful.menu({ items = { { "awesome", myawesomemenu, beautiful.awesome_icon },
-                                    { "open terminal", terminal }
-                                  }
-                        })
+mymainmenu = freedesktop.menu.build({
+    before = {
+        { "&Awesome", myawesomemenu, beautiful.awesome_icon },
+        -- other triads can be put here
+    },
+    after = {
+        { "&Terminal", terminal, menubar.utils.lookup_icon("terminal") },
+        { "Loc&k Screen", "xscreensaver-command -lock", menubar.utils.lookup_icon("system-lock-screen") },
+        { "&Log Out", function() awesome.quit() end, menubar.utils.lookup_icon("system-log-out") },
+        { "Sus&pend", "systemctl suspend", menubar.utils.lookup_icon("system-suspend") },
+        { "&Hibernate", "systemctl hibernate", menubar.utils.lookup_icon("system-suspend-hibernate") },
+        { "&Reboot",
+          confirm_action("Reboot", function() awesome.emit_signal("exit", nil); awful.spawn("systemctl reboot") end),
+          menubar.utils.lookup_icon("system-reboot") },
+        { "&Shutdown",
+          confirm_action("Shutdown", function() awesome.emit_signal("exit", nil); awful.spawn("poweroff") end),
+          menubar.utils.lookup_icon("system-shutdown") },
+        -- other triads can be put here
+    }
+})
 
 mylauncher = awful.widget.launcher({ image = beautiful.awesome_icon,
                                      menu = mymainmenu })
