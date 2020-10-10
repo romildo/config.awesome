@@ -209,6 +209,49 @@ end
 -- }}}
 
 -- {{{ Menu
+-- theme menu
+function create_themes_menu()
+    -- List of search paths
+    path_list = {
+        gears.filesystem.get_themes_dir(),
+        gears.filesystem.get_configuration_dir() .. "themes/",
+    }
+
+    -- Initialize table
+    theme_list = {}
+
+    -- Perform search
+    for _, path in ipairs(path_list) do
+        local p = io.popen("find -L '" .. path .. "' -name theme.lua -type f")
+        for fname in p:lines() do
+            fold = string.gsub(fname, ".*/(.*)/theme.lua$", "%1")
+            theme_list[fold] = fname
+            -- naughty.notify({text=fname .. " => " .. fold, title="Theme", timeout=30})
+        end
+    end
+
+    -- Create menu
+    menu_items = {}
+    for theme_name, theme_file in pairs(theme_list) do
+        theme = nil;
+        theme = dofile(theme_file)
+        theme_icon = theme.awesome_icon
+        theme = nil
+        table.insert(menu_items, {
+                         theme_name,
+                         function ()
+                             local theme_fname = gears.filesystem.get_configuration_dir() .. "theme"
+                             local file = io.open(theme_fname, "w")
+                             file:write(theme_name .. "\n")
+                             file:close()
+                             awesome.restart()
+                         end,
+                         theme_icon
+        })
+    end
+
+    return menu_items
+end
 -- Create a launcher widget and a main menu
 myawesomemenu = {
    { "&Hotkeys", function() hotkeys_popup.show_help(nil, awful.screen.focused()) end },
@@ -224,6 +267,7 @@ mymainmenu = freedesktop.menu.build({
         -- other triads can be put here
     },
     after = {
+        { "&Themes", create_themes_menu() },
         { "&Terminal", terminal, menubar.utils.lookup_icon("terminal") },
         { "Loc&k Screen", "xscreensaver-command -lock", menubar.utils.lookup_icon("system-lock-screen") },
         { "&Log Out", function() awesome.quit() end, menubar.utils.lookup_icon("system-log-out") },
