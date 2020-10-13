@@ -540,6 +540,13 @@ awful.keyboard.append_global_keybindings({
             display_notifications = true,
     }),
 
+    -- Alt + Esc: open the Clients Menu as an application switcher (from the FAQ)
+    awful.key({ altkey }, "Escape", function ()
+            -- If you want to always position the menu on the same place set coordinates
+            awful.menu.menu_keys.down = { "Down", "Alt_L" }
+            awful.menu.clients({theme = { width = 250 }}, { keygrabber=true, coords={x=525, y=330} })
+    end),
+
     -- Volume control
     awful.key({ }, "XF86AudioRaiseVolume",
         function () awful.spawn("pactl set-sink-volume @DEFAULT_SINK@ +2000") end,
