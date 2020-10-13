@@ -769,6 +769,32 @@ client.connect_signal("request::default_keybindings", function()
                 f(c.focus, {honor_workarea=true, to_percent = 0.5})
             end ,
             {description = "maximize horizontally to the bottom half of screen", group = "client"}),
+
+        -- some interesting placements
+
+        awful.key({ modkey }, ";",
+            function (c)
+                awful.placement.no_offscreen(c.focus, {honor_workarea=true, margins=0})
+            end ,
+            {description = "place the client so no part of it will be outside the screen", group = "client"}),
+
+        -- REVIEW
+        awful.key({ modkey }, ".",
+            function (c)
+                awful.placement.no_overlap(c.focus)
+            end ,
+            {description = "place the client where there’s place available with minimum overlap", group = "client"}),
+
+        awful.key({ modkey }, ",",
+            function (c)
+                awful.placement.closest_corner(c.focus)
+            end ,
+            {description = "move the client to the closest corner", group = "client"}),
+
+        -- REVIEW
+        awful.key({ modkey, "Shift" }, "t",
+            awful.titlebar.toggle,
+            {description = "toggle title bar", group = "client"}),
     })
 end)
 
