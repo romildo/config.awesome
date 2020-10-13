@@ -741,6 +741,34 @@ client.connect_signal("request::default_keybindings", function()
                 c:raise()
             end ,
             {description = "(un)maximize horizontally", group = "client"}),
+
+        -- Added by JRM
+
+        -- Simulate Windows 7 'edge snap' (also called aero snap) feature
+        awful.key({ modkey, altkey }, "Left",
+            function (c)
+                local f = awful.placement.scale + awful.placement.left + awful.placement.maximize_vertically
+                f(c.focus, {honor_workarea=true, to_percent = 0.5})
+            end ,
+            {description = "maximize vertically to the left half of screen", group = "client"}),
+        awful.key({ modkey, altkey }, "Right",
+            function (c)
+                local f = awful.placement.scale + awful.placement.right + awful.placement.maximize_vertically
+                f(c.focus, {honor_workarea=true, to_percent = 0.5})
+            end ,
+            {description = "maximize vertically to the right half of screen", group = "client"}),
+        awful.key({ modkey, altkey }, "Up",
+            function (c)
+                local f = awful.placement.scale + awful.placement.top + awful.placement.maximize_horizontally
+                f(c.focus, {honor_workarea=true, to_percent = 0.5})
+            end ,
+            {description = "maximize horizontally to the top half of screen", group = "client"}),
+        awful.key({ modkey, altkey }, "Down",
+            function (c)
+                local f = awful.placement.scale + awful.placement.bottom + awful.placement.maximize_horizontally
+                f(c.focus, {honor_workarea=true, to_percent = 0.5})
+            end ,
+            {description = "maximize horizontally to the bottom half of screen", group = "client"}),
     })
 end)
 
