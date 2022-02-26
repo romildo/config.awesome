@@ -37,7 +37,7 @@ fi
 eDP=$(xrandr --listmonitors | cut -d ' ' -f 6 | grep eDP)
 HDMI=$(xrandr --listmonitors | cut -d ' ' -f 6 | grep HDMI)
 if [ -n "$eDP" -a -n "$HDMI" ]; then
-    xrandr --verbose --output "$eDP" --auto --primary --output "$HDMI" --left-of "$eDP" --auto
+    xrandr --verbose --output "$eDP" --auto --primary --output "$HDMI" --right-of "$eDP" --auto
 fi
 # xrandr --verbose --output HDMI-0 --mode 1440x900
 # autorandr --change
