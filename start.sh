@@ -55,8 +55,8 @@ command -v volctl && pgrep -a -f -u $USER volctl || volctl &
 #run volctl
 
 #run liferea
-###!run2 xfce4-power-man xfce4-power-manager
-run2 mate-power-man mate-power-manager
+run2 xfce4-power-man xfce4-power-manager
+###!run2 mate-power-man mate-power-manager
 #run cbatticon
 #run jgmenu --hide-on-startup
 
