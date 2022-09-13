@@ -21,12 +21,31 @@ local hotkeys_popup = require("awful.hotkeys_popup")
 -- when client with a matching name is opened:
 require("awful.hotkeys_popup.keys")
 
+-- OS ID
+local function read_file(path)
+    local file = io.open(path, "r") -- r read mode
+    if not file then return nil end
+    local content = file:read("*all")
+    file:close()
+    return content
+end
+local os_release = read_file("/etc/os-release")
+local os_name = os_release:match('%f[%g]ID=([^\n]*)')
+local path_to_icons = "/usr/share/icons/Qogir/symbolic/status"
+if os_name == "nixos" then
+    path_to_icons = "/run/current-system/sw/share/icons/Qogir/symbolic/status"
+end
+-- naughty.notify({text=os_release, title="os_release", timeout=30})
+-- naughty.notify({text=os_name, title="os_name", timeout=30})
+-- naughty.notify({text=path_to_icons, title="path_to_icons", timeout=30})
+
 -- provides setenv
 local posix = require("posix")
-posix.stdlib.setenv("QT_QPA_PLATFORMTHEME", "qt5ct") -- qt5ct gnome gtk2 gtk3
-posix.stdlib.setenv("QT_STYLE_OVERRIDE", "Breeze") -- Breeze Windows Fusion
+-- posix.stdlib.setenv("QT_QPA_PLATFORMTHEME", "qt5ct") -- qt5ct gnome gtk2 gtk3 lxqt
+-- posix.stdlib.setenv("QT_QPA_PLATFORMTHEME", "lxqt") -- qt5ct gnome gtk2 gtk3 lxqt
+-- posix.stdlib.setenv("QT_STYLE_OVERRIDE", "Breeze") -- Breeze Windows Fusion
 --posix.stdlib.setenv("QT_AUTO_SCREEN_SCALE_FACTOR", "0")
-posix.stdlib.setenv("QT_FONT_DPI", "128")
+-- posix.stdlib.setenv("QT_FONT_DPI", "110")
 --posix.stdlib.setenv("GDK_DPI_SCALE", "1.28")
 --posix.stdlib.setenv("EDITOR", "vim")
 
@@ -36,12 +55,13 @@ local freedesktop = require("freedesktop")
 
 -- Alt-Tab for the awesome window manager (and more)
 -- https://github.com/blueyed/awesome-cyclefocus
-local cyclefocus = require('cyclefocus')
+local cyclefocus = require('awesome-cyclefocus')
 -- cyclefocus.debug_level = 2
 -- cyclefocus.debug_use_naughty_notify = true
 cyclefocus.move_mouse_pointer = false
 cyclefocus.display_next_count = 3
 cyclefocus.display_prev_count = 3
+cyclefocus.centered = true
 cyclefocus.default_preset.base_font_size = 14
 cyclefocus.default_preset.scale_factor_for_entry_offset = { ["0"] = 1.5, ["1"] = 1.4,  ["2"] = 1.3,  ["3"] = 1.2,  ["4"] = 1.1, }
 
@@ -108,10 +128,14 @@ local function mytheme(config)
     -- -- theme.wibar_bg = nord0
 
     -- icon theme
-    theme.icon_theme="Papirus-Dark"
+    -- theme.icon_theme="breeze-dark"
     -- theme.icon_theme="Nordic-Darker"
+    -- theme.icon_theme="Obsidian"
+    theme.icon_theme="Papirus"
 
     -- sizes
+
+    --theme.border_width = 4
     theme.menu_height = 32
     theme.menu_width = 256
     theme.wibar_height = 30
@@ -123,6 +147,7 @@ local function mytheme(config)
     theme.font = "Sans 12"
     theme.tasklist_font = "Sans 11"
     theme.tasklist_font_focus = "Sans bold italic 11"
+    theme.tasklist_font_urgent = "Sans bold 11"
     theme.taglist_font = "Sans 14"
     theme.menu_font = "Sans 14"
     theme.notification_font = "Sans 13"
@@ -174,7 +199,7 @@ beautiful.init(mytheme(get_current_theme()))
 -- This is used later as the default terminal and editor to run.
 terminal = "terminology"
 editor = os.getenv("EDITOR") or "emacs"
-editor_cmd = terminal .. " -e " .. editor
+editor_cmd = "emacseditor"
 
 -- Default modkey.
 -- Usually, Mod4 is the key with a logo between Control and Alt.
@@ -257,7 +282,7 @@ myawesomemenu = {
    { "&Hotkeys", function() hotkeys_popup.show_help(nil, awful.screen.focused()) end },
    { "&Manual", terminal .. " -e man awesome" },
    { "&Edit config", editor_cmd .. " " .. awesome.conffile },
-   { "Restart", awesome.restart },
+   { "&Restart", awesome.restart, beautiful.awesome_icon },
    { "Quit", function() awesome.quit() end },
 }
 
@@ -270,7 +295,9 @@ mymainmenu = freedesktop.menu.build({
         { "&Themes", create_themes_menu() },
         { "&Terminal", terminal, menubar.utils.lookup_icon("terminal") },
         { "Loc&k Screen", "xscreensaver-command -lock", menubar.utils.lookup_icon("system-lock-screen") },
-        { "&Log Out", function() awesome.quit() end, menubar.utils.lookup_icon("system-log-out") },
+        { "&Log Out",
+          confirm_action("Log out", function() awesome.emit_signal("exit", nil); awesome.quit() end),
+          menubar.utils.lookup_icon("system-log-out") },
         { "Sus&pend", "systemctl suspend", menubar.utils.lookup_icon("system-suspend") },
         { "&Hibernate", "systemctl hibernate", menubar.utils.lookup_icon("system-suspend-hibernate") },
         { "&Reboot",
@@ -288,6 +315,33 @@ mylauncher = awful.widget.launcher({ image = beautiful.awesome_icon,
 
 -- Menubar configuration
 menubar.utils.terminal = terminal -- Set the terminal for applications that require it
+
+-- Client menu
+function myclientmenu(c)
+    tag_menu = { }
+
+    for s in screen do
+        table.insert(tag_menu, { s.name .. (c.screen == s and " ✓" or ""), function() end })
+        for i, t in pairs(s.tags) do
+            table.insert(tag_menu, { "  " .. t.name .. (c.first_tag == t and " ✓" or ""), function() c:move_to_tag(t) end })
+        end
+    end
+
+    entries = {
+        { "Mo&ve To", tag_menu },
+        c.minimized
+            and { "&Restore",  function() c:activate { action = "toggle_minimization" } end, menubar.utils.lookup_icon("window-minimize") }
+            or  { "&Minimize", function() c:activate { action = "toggle_minimization" } end, menubar.utils.lookup_icon("window-restore") },
+        { c.maximized and "Unma&ximize" or "Ma&ximize", function() c.maximized = not c.maximized; c:raise() end, menubar.utils.lookup_icon("window-maximize-symbolic") },
+        { c.fullscreen and "★ &Fullscreen" or "&Fullscreen", function() c.fullscreen = not c.fullscreen; c:raise() end, beautiful.layout_fullscreen },           
+        { "Toggle &Sticky", function (c) c.sticky = not c.sticky end },
+        { c.ontop and "★ On &Top" or "On &Top", function() c.ontop = not c.ontop end, menubar.utils.lookup_icon("go-top") },
+        { c.floating and "★ F&loating" or "F&loating", function() awful.client.floating.toggle(c) end, menubar.utils.lookup_icon("floating") },
+        { "&Close", function() c:kill() end, menubar.utils.lookup_icon("window-close") },
+    }
+    
+    return awful.menu(entries)
+end
 -- }}}
 
 -- {{{ Tag
@@ -317,7 +371,7 @@ end)
 mykeyboardlayout = awful.widget.keyboardlayout()
 
 -- Create a textclock widget
-mytextclock = wibox.widget.textclock(" %a %b %d, %T")
+mytextclock = wibox.widget.textclock(" %a %b %d, %T", 1)
 mytextclock:connect_signal("button::press",
                            function (a, b, c, btnumber)
                               --naughty.notify({text=item .. " " .. button .. " " .. mods, title="Titre"})
@@ -389,7 +443,16 @@ screen.connect_signal("request::desktop_decoration", function(s)
             awful.button({ }, 1, function (c)
                 c:activate { context = "tasklist", action = "toggle_minimization" }
             end),
-            awful.button({ }, 3, function() awful.menu.client_list { theme = { width = 250 } } end),
+            -- awful.button({ }, 3, function() awful.menu.client_list { theme = { width = 250 } } end),
+            awful.button({ }, 3, function (c)
+                    if my_cl_menu then
+                        my_cl_menu:hide()
+                        my_cl_menu = nil
+                    else
+                        my_cl_menu = myclientmenu(c)
+                        my_cl_menu:show()
+                    end
+            end),
             awful.button({ }, 4, function() awful.client.focus.byidx(-1) end),
             awful.button({ }, 5, function() awful.client.focus.byidx( 1) end),
         }
@@ -516,10 +579,15 @@ awful.keyboard.append_global_keybindings({
                   end
               end,
               {description = "restore minimized", group = "client"}),
+})
 
-    -- Added by JRM
+-- JRM: logout screen
+-- awful.keyboard.append_global_keybindings({
+--     awful.key({ modkey }, "l", function() logout.launch() end, {description = "Show logout screen", group = "custom"}),
+-- })
 
-    -- awesome-cyclefocus: cycle through all clients on the same screen
+-- JRM: awesome-cyclefocus: cycle through all clients on the same screen
+awful.keyboard.append_global_keybindings({
     cyclefocus.key({ altkey, }, "Tab", {
             cycle_filters = { function (c, source_c)
                               if c == nil or source_c == nil then
@@ -539,15 +607,20 @@ awful.keyboard.append_global_keybindings({
             keys = {'Tab', 'ISO_Left_Tab'},  -- default, could be left out
             display_notifications = true,
     }),
+})
 
-    -- Alt + Esc: open the Clients Menu as an application switcher (from the FAQ)
+-- JRM: Alt + Esc: open the Clients Menu as an application switcher (from the FAQ)
+awful.keyboard.append_global_keybindings({
     awful.key({ altkey }, "Escape", function ()
             -- If you want to always position the menu on the same place set coordinates
             awful.menu.menu_keys.down = { "Down", "Alt_L" }
             awful.menu.clients({theme = { width = 250 }}, { keygrabber=true, coords={x=525, y=330} })
     end),
 
-    -- Volume control
+})
+
+-- JRM: Volume control
+awful.keyboard.append_global_keybindings({
     awful.key({ }, "XF86AudioRaiseVolume",
         function () awful.spawn("pactl set-sink-volume @DEFAULT_SINK@ +2000") end,
         {description = "raise master volume", group = "custom"}),
@@ -571,22 +644,35 @@ awful.keyboard.append_global_keybindings({
     awful.key({ }, "XF86AudioPrev",
         function () awful.spawn("playerctl previous") end,
         {description = "skip to previous track", group = "custom"}),
+})
 
-    -- Applications
-    awful.key({ modkey, altkey }, "t", function () awful.spawn("gnome-terminal") end, {description = "launch gnome-terminal", group = "launcher"}),
-    awful.key({ modkey, altkey }, "w", function () awful.spawn("firefox") end, {description = "launch firefox", group = "launcher"}),
-    --awful.key({ modkey, altkey }, "w", function () awful.spawn("vivaldi") end, {description = "launch vivaldi", group = "launcher"}),
-    awful.key({ modkey, altkey }, "e", function () awful.spawn("emacsclient -a emacs -c") end, {description = "launch emacsclient", group = "launcher"}),
+-- JRM: Applications
+awful.keyboard.append_global_keybindings({
+    awful.key({ modkey, altkey }, "Return", function () awful.spawn("gnome-terminal") end, {description = "launch gnome-terminal", group = "launcher"}),
+    awful.key({ modkey, altkey }, "t", function () awful.spawn("terminology -d /alt/nixpkgs") end, {description = "launch terminal at /alt/nixpkgs", group = "launcher"}),
+    -- awful.key({ modkey, altkey }, "w", function () awful.spawn("firefox") end, {description = "launch firefox", group = "launcher"}),
+    awful.key({ modkey, altkey }, "w", function () awful.spawn("vivaldi") end, {description = "launch vivaldi", group = "launcher"}),
+    awful.key({ modkey, altkey }, "e", function () awful.spawn("emacsclient -a emacs --create-frame") end, {description = "launch emacsclient", group = "launcher"}),
+    awful.key({ modkey, "Control" }, "e", function () awful.spawn("emacsclient -a emacs --create-frame --eval '(magit-status \"/alt/nixpkgs\")'") end, {description = "launch magit on /alt/nixpkgs", group = "launcher"}),
     --awful.key({ modkey, altkey }, "f", function () awful.spawn("dolphin") end, {description = "launch dolphin", group = "launcher"}),
     awful.key({ modkey, altkey }, "f", function () awful.spawn("pcmanfm-qt") end, {description = "launch pcmanfm-qt", group = "launcher"}),
     awful.key({ modkey, altkey }, "q", function () awful.spawn("gnome-terminal --window-with-profile=malaquias") end, {description = "launch gnome-terminal at malaquias", group = "launcher"}),
     awful.key({ modkey, altkey }, "m", function () awful.spawn("gnome-terminal --window-with-profile=mutt") end, {description = "launch mutt on gnome-terminal", group = "launcher"}),
     awful.key({ modkey, altkey }, "s", function () awful.spawn("gksu --user mike --login gnome-terminal") end, {description = "launch gnome-terminal for mike", group = "launcher"}),
     awful.key({ modkey, altkey }, "r", function () awful.spawn("gksu --login gnome-terminal") end, {description = "launch gnome-terminal for root", group = "launcher"}),
+    awful.key({ modkey, "Shift" }, "r", function () awful.spawn("gksu --login emacs") end, {description = "launch emacs for root", group = "launcher"}),
     awful.key({ modkey, altkey }, "g", function () awful.spawn("gksu --login pcmanfm-qt") end, {description = "launch pcmanfm-qt for root", group = "launcher"}),
     awful.key({ modkey, altkey }, "v", function () awful.spawn("vim -g") end, {description = "launch gvim", group = "launcher"}),
     awful.key({ modkey, altkey }, "i", function () awful.spawn("xcalib -invert -alter") end, {description = "launch xcalib", group = "launcher"})
 })
+
+-- JRM: sticky windows
+client.connect_signal("request::default_keybindings", function()
+    awful.keyboard.append_client_keybindings({
+        awful.key({ modkey, }, "g", function (c) c.sticky = not c.sticky end,
+          {description = "toggle sticky", group = "client"})
+    })
+end)
 
 -- Layout related keybindings
 awful.keyboard.append_global_keybindings({
@@ -778,10 +864,9 @@ client.connect_signal("request::default_keybindings", function()
             end ,
             {description = "place the client so no part of it will be outside the screen", group = "client"}),
 
-        -- REVIEW
         awful.key({ modkey }, ".",
             function (c)
-                awful.placement.no_overlap(c.focus)
+                (awful.placement.no_overlap+awful.placement.no_offscreen)(c.focus)
             end ,
             {description = "place the client where there’s place available with minimum overlap", group = "client"}),
 
@@ -842,7 +927,8 @@ ruled.client.connect_signal("request::rules", function()
     ruled.client.append_rule {
         id         = "titlebars",
         rule_any   = { type = { "normal", "dialog" } },
-        properties = { titlebars_enabled = true      }
+        except_any = { class = { "Firefox", "Vivaldi", "Liferea", "Thunderbird" } },
+        properties = { titlebars_enabled = true }
     }
 
     -- Set Firefox to always map on the tag named "2" on screen 1.
@@ -850,6 +936,13 @@ ruled.client.connect_signal("request::rules", function()
     --     rule       = { class = "Firefox"     },
     --     properties = { screen = 1, tag = "2" }
     -- }
+
+    -- Remove gaps between windows
+    ruled.client.append_rule {
+        id         = "gaps",
+        rule_any   = { type = { "normal", "dialog" } },
+        properties = { size_hints_honor = false      }
+    }
 end)
 
 -- }}}
@@ -937,3 +1030,123 @@ awesome.connect_signal(
 
 awful.spawn.with_shell("$HOME/.config/awesome/start.sh")
 -- }}}
+
+
+
+local function spans_common(x1, w1, x2, w2)
+  return not (x2 + w2 <= x1 or x2 >= x1 + w1)
+end
+
+-- Moves/grows the window to the nearest edge in the direction
+-- specified. Edges are the outer edges of other windows, monitor
+-- edges in multi-monitor setups, or the desktop boundaries.
+local function move_to_edge(direction, resize)
+    return function(c)
+        local sg = c.screen.tiling_area
+
+        local c_x = c.x - c.border_width
+        local c_y = c.y - c.border_width
+        local c_w = c.width + 2 * c.border_width
+        local c_h = c.height + 2 * c.border_width
+
+        local x, y, w, h
+
+        if direction == "Left" then
+          x = sg.x - c.border_width
+        elseif direction == "Right" then
+          x = sg.x + sg.width - c_w - c.border_width
+        else
+          x = c_x
+        end
+
+        if direction == "Up" then
+          y = sg.y - c.border_width
+        elseif direction == "Down" then
+          y = sg.y + sg.height - c_h - c.border_width
+        else
+          y = c_y
+        end
+
+        for i, cur in pairs(c.screen.clients) do
+          if cur ~= c then
+            local cur_x = cur.x - cur.border_width
+            local cur_y = cur.y - cur.border_width
+            local cur_w = cur.width + 2 * cur.border_width
+            local cur_h = cur.height + 2 * cur.border_width
+            if direction == "Left" and spans_common(c_y, c_h, cur_y, cur_h) then
+              if cur_x + cur_w < c_x then
+                x = math.max(x, cur_x + cur_w)
+              elseif c_x + c_w > cur_x and not resize then
+                x = math.max(x, cur_x - c_w)
+              end
+            elseif direction == "Right" and spans_common(c_y, c_h, cur_y, cur_h) then
+              if cur_x > c_x + c_w then
+                x = math.min(x, cur_x - c_w)
+              elseif c_x < cur_x + cur_w and not resize then
+                x = math.min(x, cur_x + cur_w)
+              end
+            end
+            if direction == "Up" and spans_common(c_x, c_w, cur_x, cur_w) then
+              if cur_y + cur_h < c_y then
+                y = math.max(y, cur_y + cur_h)
+              elseif c_y + c_h > cur_y and not resize then
+                y = math.max(y, cur_y - c_h)
+              end
+            elseif direction == "Down" and spans_common(c_x, c_w, cur_x, cur_w) then
+              if cur_y > c_y + c_h then
+                y = math.min(y, cur_y - c_h)
+              elseif c_y < cur_y + cur_h and not resize then
+                y = math.min(y, cur_y + cur_h)
+              end
+            end
+          end
+        end
+
+        if x ~= c_x or y ~= c_y then
+          local dx, dy, dw, dh = 0, 0, 0, 0
+          if resize then
+            if direction == "Left" then
+              dx = x - c_x
+              dw = - dx
+            elseif direction == "Right" then
+              dx = 0
+              dw = x - c_x
+            end
+            if direction == "Up" then
+              dy = y - c_y
+              dh = - dy
+            elseif direction == "Down" then
+              dy = 0
+              dh = y - c_y
+            end
+          else
+            dx = x - c_x
+            dy = y - c_y
+          end
+          c:relative_move(dx, dy, dw, dh)
+        end
+    end
+end
+
+client.connect_signal("request::default_keybindings", function()
+    awful.keyboard.append_client_keybindings({
+        awful.key({
+            modifiers = { modkey, "Control" },
+            keygroup = "arrows",
+            on_press = function(direction, client)
+                move_to_edge(direction)(client)
+            end,
+            description = "move client to edge",
+            group = "client",
+        }),
+        awful.key({
+            modifiers = { modkey, "Control", "Shift" },
+            keygroup = "arrows",
+            on_press = function(direction, client)
+                move_to_edge(direction, true)(client)
+            end,
+            description = "grow client to edge",
+            group = "client",
+        }),
+    })
+end)
